@@ -1,0 +1,17 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: qr_pass
+      MYSQL_USER: qrpass
+      MYSQL_PASSWORD: qrpasspw
+    ports:
+      # 로컬에 이미 3306을 쓰는 MySQL이 있을 수 있어 호스트 포트는 33306으로 분리
+      - "33306:3306"
+    volumes:
+      - qr-pass-mysql-dev:/var/lib/mysql
+
+volumes:
+  qr-pass-mysql-dev:

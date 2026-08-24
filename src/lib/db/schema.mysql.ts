@@ -1,0 +1,133 @@
+import {
+  boolean,
+  index,
+  int,
+  json,
+  mysqlEnum,
+  mysqlTable,
+  primaryKey,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/mysql-core";
+import { EVENT_STATUSES, NOTIFICATION_STATUSES, STAFF_ROLES } from "@/lib/constants";
+
+/**
+ * 홈랩 MySQL 스키마 (draft.md §7 + draft-modular-coral.md §3).
+ * 이후 Workers 단계에서 schema.pg.ts로 동일 테이블 구조를 만들 예정이며,
+ * 호출부는 Repository 인터페이스만 보므로 이 파일이 바뀌어도 영향받지 않는다.
+ */
+
+export const events = mysqlTable("events", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  startAt: timestamp("start_at"),
+  endAt: timestamp("end_at"),
+  status: mysqlEnum("status", EVENT_STATUSES).notNull().default("DRAFT"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+export const questions = mysqlTable(
+  "questions",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    eventId: varchar("event_id", { length: 36 })
+      .notNull()
+      .references(() => events.id),
+    question: text("question").notNull(),
+    /** 4지선다 고정 (draft.md §10): { A: "...", B: "...", C: "...", D: "..." } */
+    options: json("options").notNull(),
+    sortOrder: int("sort_order").notNull().default(0),
+    required: boolean("required").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("questions_event_id_idx").on(table.eventId)],
+);
+
+export const participants = mysqlTable(
+  "participants",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    eventId: varchar("event_id", { length: 36 })
+      .notNull()
+      .references(() => events.id),
+    name: varchar("name", { length: 100 }).notNull(),
+    phone: varchar("phone", { length: 20 }).notNull(),
+    privacyAgreed: boolean("privacy_agreed").notNull(),
+    marketingAgreed: boolean("marketing_agreed").notNull().default(false),
+    /** 원문 토큰은 저장하지 않고 해시만 저장 (draft.md §7) */
+    qrTokenHash: varchar("qr_token_hash", { length: 64 }).notNull().unique(),
+    notificationStatus: mysqlEnum("notification_status", NOTIFICATION_STATUSES)
+      .notNull()
+      .default("PENDING"),
+    checkedInAt: timestamp("checked_in_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("participants_event_id_idx").on(table.eventId),
+    index("participants_qr_token_hash_idx").on(table.qrTokenHash),
+    index("participants_created_at_idx").on(table.createdAt),
+  ],
+);
+
+export const answers = mysqlTable(
+  "answers",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    participantId: varchar("participant_id", { length: 36 })
+      .notNull()
+      .references(() => participants.id),
+    questionId: varchar("question_id", { length: 36 }).notNull(),
+    /** A/B/C/D 선택지 라벨 */
+    answer: varchar("answer", { length: 10 }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("answers_participant_id_idx").on(table.participantId),
+    index("answers_question_id_idx").on(table.questionId),
+  ],
+);
+
+export const staff = mysqlTable("staff", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  username: varchar("username", { length: 100 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  role: mysqlEnum("role", STAFF_ROLES).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const eventStaff = mysqlTable(
+  "event_staff",
+  {
+    eventId: varchar("event_id", { length: 36 })
+      .notNull()
+      .references(() => events.id),
+    staffId: varchar("staff_id", { length: 36 })
+      .notNull()
+      .references(() => staff.id),
+  },
+  (table) => [primaryKey({ columns: [table.eventId, table.staffId] })],
+);
+
+export const checkIns = mysqlTable(
+  "check_ins",
+  {
+    id: varchar("id", { length: 36 }).primaryKey(),
+    participantId: varchar("participant_id", { length: 36 })
+      .notNull()
+      .references(() => participants.id),
+    staffId: varchar("staff_id", { length: 36 })
+      .notNull()
+      .references(() => staff.id),
+    checkedInAt: timestamp("checked_in_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("check_ins_participant_id_idx").on(table.participantId),
+    index("check_ins_staff_id_idx").on(table.staffId),
+    index("check_ins_checked_in_at_idx").on(table.checkedInAt),
+  ],
+);
