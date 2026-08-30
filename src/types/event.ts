@@ -36,3 +36,10 @@ export interface EventSummary {
 export interface EventDetail extends EventSummary {
   questions: EventSurveyQuestion[];
 }
+
+/** 하루 선착순 정원 현황 (랜딩 페이지 CTA 활성/비활성 판단용) */
+export interface DailyCapacity {
+  limit: number;
+  count: number;
+  isFull: boolean;
+}

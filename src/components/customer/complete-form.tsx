@@ -1,10 +1,7 @@
-"use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { EventCtaButton } from "@/components/customer/event-cta-button";
 import { EventLogo } from "@/components/customer/event-logo";
@@ -28,7 +25,18 @@ interface CompleteFormProps {
   copy?: Partial<EventCopy>;
   /** 이 행사 문항 id 목록. 저장된 답변이 이 문항들을 전부 채웠는지 확인하는 데 쓴다. */
   questionIds: string[];
+  /**
+   * 이 페이지가 열린 시점에 이미 하루 정원이 마감됐는지 (survey 페이지 진입 이후
+   * 동시에 여러 명이 마지막 자리를 두고 경쟁하는 경우를 대비한 2차 필터링 — draft.md §10).
+   * 최종 확정은 항상 제출 시 서버(POST /api/participants)의 원자적 재확인이다.
+   */
+  initiallyFull: boolean;
 }
+
+type ViewState =
+  | { kind: "form" }
+  | { kind: "full" }
+  | { kind: "success"; qrImageUrl: string | null };
 
 export function CompleteForm({
   eventSlug,
@@ -36,14 +44,15 @@ export function CompleteForm({
   eventLogo,
   copy,
   questionIds,
+  initiallyFull,
 }: CompleteFormProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const resultHeadline = copy?.resultHeadline ?? "설문이 완료되었어요!";
   const resultSubline = copy?.resultSubline ?? "입장권을 받기 위해 아래 정보를 입력해주세요.";
   const privacyConsentLabel = copy?.privacyConsentLabel ?? "[필수] 개인정보 수집 및 이용 동의";
   const marketingConsentLabel = copy?.marketingConsentLabel ?? "[선택] 마케팅 정보 수신 동의";
 
-  const [submittedQrDataUrl, setSubmittedQrDataUrl] = useState<string | undefined | null>(null);
+  const [view, setView] = useState<ViewState>(initiallyFull ? { kind: "full" } : { kind: "form" });
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // 설문을 다 안 채우고 이 페이지에 직접 접근했거나(URL 직접 입력, 새로고침, 뒤로가기 등)
@@ -51,9 +60,9 @@ export function CompleteForm({
   useEffect(() => {
     if (!hasCompleteSurveyAnswers(eventSlug, questionIds)) {
       toast.error("설문을 먼저 진행해주세요.");
-      router.replace(ROUTES.event(eventSlug));
+      navigate(ROUTES.event(eventSlug), { replace: true });
     }
-  }, [eventSlug, questionIds, router]);
+  }, [eventSlug, questionIds, navigate]);
 
   const {
     register,
@@ -81,15 +90,35 @@ export function CompleteForm({
     const data = await response.json();
 
     if (!response.ok || !data.success) {
-      setSubmitError("제출 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.");
+      if (data.status === "DAILY_LIMIT_REACHED") {
+        // 설문 진행 중 다른 사람들이 마지막 자리를 채운 경우 — 폼을 마감 안내 화면으로 전환한다.
+        setView({ kind: "full" });
+      } else if (data.status === "DUPLICATE_PHONE") {
+        setSubmitError("이미 이 전화번호로 등록되어 있어요. 발급받은 카카오톡 패스를 확인해주세요.");
+      } else {
+        setSubmitError("제출 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.");
+      }
       return;
     }
 
     clearSurveyAnswers(eventSlug);
-    setSubmittedQrDataUrl(data.debugQrDataUrl ?? null);
+    setView({ kind: "success", qrImageUrl: data.qrImageUrl ?? null });
   }
 
-  if (submittedQrDataUrl !== null) {
+  if (view.kind === "full") {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+        <EventLogo name={eventName} logo={eventLogo} />
+        <p className="text-xl font-bold text-event-primary">선착순 모집이 마감되었어요</p>
+        <p className="text-sm text-muted-foreground">
+          아쉽게도 오늘의 정원이 모두 찼습니다. 다음 기회에 만나요!
+        </p>
+      </div>
+    );
+  }
+
+  if (view.kind === "success") {
+    const { qrImageUrl } = view;
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
         <EventLogo name={eventName} logo={eventLogo} />
@@ -97,11 +126,11 @@ export function CompleteForm({
         <p className="text-sm text-muted-foreground">
           카카오톡으로 입장용 Fast Track 패스가 곧 도착해요.
         </p>
-        {submittedQrDataUrl && (
+        {qrImageUrl && (
           <div className="flex flex-col items-center gap-2 rounded-xl border border-event-primary/30 p-4">
-            <Image src={submittedQrDataUrl} alt="입장용 QR" width={160} height={160} unoptimized />
+            <img src={qrImageUrl} alt="입장용 QR" width={160} height={160} />
             <p className="text-xs text-muted-foreground">
-              (데모 모드 미리보기 — 실연동 시 카카오톡으로만 전달됩니다)
+              (모의 발송 모드 미리보기 — 실제 카카오 연동 시에는 카카오톡으로만 전달됩니다)
             </p>
           </div>
         )}

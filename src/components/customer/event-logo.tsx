@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { EventSummary } from "@/types/event";
 
@@ -12,12 +11,11 @@ interface EventLogoProps {
 export function EventLogo({ name, logo, size = "lg" }: EventLogoProps) {
   if (logo) {
     return (
-      <Image
+      <img
         src={logo.src}
         alt={name}
         width={logo.width}
         height={logo.height}
-        priority
         className={cn("h-auto w-full", size === "lg" ? "max-w-96" : "max-w-72")}
       />
     );

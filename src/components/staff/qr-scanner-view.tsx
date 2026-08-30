@@ -1,8 +1,6 @@
-"use client";
-
 import QrScanner from "qr-scanner";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { CheckInResultBanner } from "@/components/staff/check-in-result-banner";
 import { ROUTES, type CheckInStatus } from "@/lib/constants";
 
@@ -26,7 +24,7 @@ export function QrScannerView({
   eventName: string;
   initialTodayCount: number;
 }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
   const busyRef = useRef(false);
@@ -58,7 +56,7 @@ export function QrScannerView({
       setState({ kind: "result", data });
 
       if (data.status === "UNAUTHORIZED") {
-        router.push(ROUTES.staffLogin);
+        navigate(ROUTES.staffLogin);
         return;
       }
 
@@ -68,7 +66,7 @@ export function QrScannerView({
         scannerRef.current?.start();
       }, RESULT_DISPLAY_MS);
     },
-    [eventId, router],
+    [eventId, navigate],
   );
 
   useEffect(() => {

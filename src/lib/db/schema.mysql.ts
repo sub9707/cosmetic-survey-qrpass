@@ -8,6 +8,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   varchar,
 } from "drizzle-orm/mysql-core";
 import { EVENT_STATUSES, NOTIFICATION_STATUSES, STAFF_ROLES } from "@/lib/constants";
@@ -54,12 +55,18 @@ export const participants = mysqlTable(
     eventId: varchar("event_id", { length: 36 })
       .notNull()
       .references(() => events.id),
-    name: varchar("name", { length: 100 }).notNull(),
-    phone: varchar("phone", { length: 20 }).notNull(),
+    /** AES-256-GCM으로 암호화해서 저장 (src/lib/security/pii.ts). 평문 저장 금지. */
+    name: text("name").notNull(),
+    /** 위와 동일하게 암호화 저장. 조회/중복확인은 phoneLookupHash로 한다. */
+    phone: text("phone").notNull(),
+    /** 전화번호의 HMAC 블라인드 인덱스 — 같은 행사에 같은 번호로 중복등록되는 걸 막는 용도 */
+    phoneLookupHash: varchar("phone_lookup_hash", { length: 64 }).notNull(),
     privacyAgreed: boolean("privacy_agreed").notNull(),
     marketingAgreed: boolean("marketing_agreed").notNull().default(false),
     /** 원문 토큰은 저장하지 않고 해시만 저장 (draft.md §7) */
     qrTokenHash: varchar("qr_token_hash", { length: 64 }).notNull().unique(),
+    /** 미디어 서버에 업로드된 실제 QR 이미지 URL (업로드 전/실패 시 null) */
+    qrImageUrl: varchar("qr_image_url", { length: 500 }),
     notificationStatus: mysqlEnum("notification_status", NOTIFICATION_STATUSES)
       .notNull()
       .default("PENDING"),
@@ -70,6 +77,8 @@ export const participants = mysqlTable(
     index("participants_event_id_idx").on(table.eventId),
     index("participants_qr_token_hash_idx").on(table.qrTokenHash),
     index("participants_created_at_idx").on(table.createdAt),
+    // 같은 행사에 같은 전화번호로 중복등록 방지 (DB 제약으로 동시요청 레이스까지 차단)
+    unique("participants_event_phone_lookup_idx").on(table.eventId, table.phoneLookupHash),
   ],
 );
 
@@ -130,4 +139,21 @@ export const checkIns = mysqlTable(
     index("check_ins_staff_id_idx").on(table.staffId),
     index("check_ins_checked_in_at_idx").on(table.checkedInAt),
   ],
+);
+
+/**
+ * 하루 선착순 정원(100명) 카운터. event_id+date(YYYY-MM-DD, KST 기준 문자열)당 한 행이며,
+ * 참가자 등록은 이 행에 대한 조건부 UPDATE(count < limit)로만 정원을 확보한다 —
+ * check_ins의 atomicCheckIn과 같은 "조건부 UPDATE 하나로 원자성 확보" 패턴.
+ */
+export const dailyCounters = mysqlTable(
+  "daily_counters",
+  {
+    eventId: varchar("event_id", { length: 36 })
+      .notNull()
+      .references(() => events.id),
+    date: varchar("date", { length: 10 }).notNull(),
+    count: int("count").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.eventId, table.date] })],
 );

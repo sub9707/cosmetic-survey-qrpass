@@ -1,8 +1,6 @@
-"use client";
-
 import { ChevronLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { EventLogo } from "@/components/customer/event-logo";
 import { SurveyChoiceList } from "@/components/customer/survey-choice-list";
 import { SurveyProgressBar } from "@/components/customer/survey-progress-bar";
@@ -25,7 +23,7 @@ export function SurveyFlow({
   eventLogo?: EventSummary["logo"];
   questions: EventSurveyQuestion[];
 }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, ChoiceLabel>>({});
 
@@ -46,7 +44,7 @@ export function SurveyFlow({
         choice: nextAnswers[q.id],
       }));
       saveSurveyAnswers(eventSlug, payload);
-      router.push(ROUTES.eventComplete(eventSlug));
+      navigate(ROUTES.eventComplete(eventSlug));
     }, AUTO_ADVANCE_DELAY_MS);
   }
 

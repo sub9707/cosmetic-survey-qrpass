@@ -33,9 +33,14 @@ export type NotificationStatus = (typeof NOTIFICATION_STATUSES)[number];
 export const STAFF_SESSION_COOKIE = "staff_session";
 export const STAFF_SESSION_TTL_SECONDS = 60 * 60 * 12; // 12시간 (근무 교대 기준)
 
+/** 하루 선착순 참가 정원 */
+export const DAILY_REGISTRATION_LIMIT = 100;
+
 /** 데모 단계 전용 고정 계정 (seed 스크립트, memory 어댑터, 로그인 화면이 공유) */
 export const DEMO_STAFF_USERNAME = "staff1";
 export const DEMO_STAFF_PASSWORD = "staff1234";
+export const DEMO_ADMIN_USERNAME = "admin1";
+export const DEMO_ADMIN_PASSWORD = "admin12345";
 
 export const ROUTES = {
   event: (slug: string) => `/event/${slug}`,
@@ -45,5 +50,6 @@ export const ROUTES = {
   staffEvent: (eventId: string) => `/staff/${eventId}`,
   staffScanner: (eventId: string) => `/staff/${eventId}/scanner`,
   adminLogin: "/admin/login",
+  admin: "/admin",
   adminEvent: (eventId: string) => `/admin/${eventId}`,
 } as const;

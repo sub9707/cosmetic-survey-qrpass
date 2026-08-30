@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# qr-pass
 
-## Getting Started
+행사 QR 입장·설문 플랫폼. Node **Express**(API 서버) + **React**(Vite SPA) 구조로 되어 있다.
+(라즈베리파이 등 CPU가 제한된 환경에서 매 요청 SSR 비용을 없애기 위해 Next.js에서 전환됨.)
 
-First, run the development server:
+## 구조
+
+- `server/` — Express API 서버 (`/api/*`). 프로덕션에서는 `dist/client`(Vite 빌드 결과)를 정적 서빙 + SPA fallback도 담당한다.
+- `src/client/` — SPA 진입점(`main.tsx`, `App.tsx`, 라우팅/훅).
+- `src/pages/` — 화면 단위 React 컴포넌트 (react-router 라우트에 매핑).
+- `src/components/` — 화면 컴포넌트 (customer/staff/ui).
+- `src/lib/` — DB repository, 인증(JWT), QR, 알림, 검증(zod) 등 프레임워크 비종속 로직. Express 라우트가 그대로 사용한다.
+
+## 개발
 
 ```bash
+docker compose -f docker-compose.dev.yml up -d   # 로컬 MySQL (DB_PROVIDER=mysql일 때)
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run dev`는 Express API 서버(`tsx watch server/index.ts`, 기본 포트 3001)와 Vite dev 서버(기본 포트 5173, `/api`를 Express로 프록시)를 동시에 띄운다. 브라우저는 Vite 서버 주소로 접속한다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 빌드 / 배포 (PM2)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build   # vite build → dist/client
+npm start       # NODE_ENV=production 아래에서 Express가 dist/client 정적 서빙 + API 서빙
+```
 
-## Learn More
+라즈베리파이 등에서는 pm2로 실행한다:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pm2 start ecosystem.config.js
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## DB
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`.env.local.example` 참고. `DB_PROVIDER=mysql`이면 MySQL 어댑터, 아니면 in-memory 어댑터를 사용한다.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run db:generate
+npm run db:push
+npm run db:seed
+```
