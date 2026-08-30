@@ -28,7 +28,6 @@ npm run build   # vite build → dist/client
 npm start       # NODE_ENV=production 아래에서 Express가 dist/client 정적 서빙 + API 서빙
 ```
 
-라즈베리파이 등에서는 pm2로 실행한다:
 
 ```bash
 pm2 start ecosystem.config.js

@@ -7,7 +7,7 @@ export async function createStaffSession(res: Response, session: StaffSession): 
   const token = await signStaffToken(session);
   res.cookie(STAFF_SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.COOKIE_SECURE === "true",
     sameSite: "lax",
     path: "/",
     maxAge: STAFF_SESSION_TTL_SECONDS * 1000, // Express는 ms 단위

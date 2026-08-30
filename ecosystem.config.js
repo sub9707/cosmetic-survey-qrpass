@@ -13,6 +13,7 @@ module.exports = {
       args: "server/index.ts",
       env: {
         NODE_ENV: "production",
+        COOKIE_SECURE: process.env.COOKIE_SECURE || "false",
         PORT: process.env.PORT || 4001,
         HOSTNAME: "0.0.0.0",
         DB_PROVIDER: process.env.DB_PROVIDER,
