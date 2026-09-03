@@ -16,6 +16,12 @@ function kstDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
 }
 
+/** 데모 스태프/관리자 id → 표시 이름 (memory staff-repository와 동일) */
+const DEMO_STAFF_NAMES: Record<string, string> = {
+  "demo-staff-1": "김직원",
+  "demo-admin-1": "박관리자",
+};
+
 /**
  * 홈랩 MySQL 연결 정보가 준비되기 전까지 쓰는 임시 in-memory 구현체.
  * ParticipantRepository 인터페이스만 지키면 되므로, 실제 MySQL 구현체로
@@ -26,6 +32,8 @@ class InMemoryParticipantRepository implements ParticipantRepository {
   private store = new Map<string, Participant>();
   /** key: `${eventId}:${date}` */
   private dailyCounts = new Map<string, number>();
+  /** participantId → 마지막으로 입장 처리한 스태프/관리자 id (입장 취소 시 삭제) */
+  private checkedInBy = new Map<string, string>();
 
   async createIfCapacityAvailable(input: ParticipantInput, qrToken: string, qrTokenHash: string) {
     // 이 함수 안에서 await 없이 확인+증가하므로(JS 싱글 스레드) 동시 요청에도 원자적이다.
@@ -81,6 +89,7 @@ class InMemoryParticipantRepository implements ParticipantRepository {
   async atomicCheckIn({
     qrTokenHash,
     eventId,
+    staffId,
   }: {
     qrTokenHash: string;
     eventId: string;
@@ -98,6 +107,7 @@ class InMemoryParticipantRepository implements ParticipantRepository {
       };
     }
     participant.checkedInAt = new Date().toISOString();
+    this.checkedInBy.set(participant.id, staffId);
     return { status: "CHECKED_IN", participantId: participant.id, participantName: participant.name };
   }
 
@@ -135,7 +145,14 @@ class InMemoryParticipantRepository implements ParticipantRepository {
         checkedInAt: p.checkedInAt,
         createdAt: p.createdAt,
         qrImageUrl: p.qrImageUrl,
+        checkedInByName: p.checkedInAt ? this.staffName(p.id) : null,
       }));
+  }
+
+  private staffName(participantId: string): string | null {
+    const staffId = this.checkedInBy.get(participantId);
+    if (!staffId) return null;
+    return DEMO_STAFF_NAMES[staffId] ?? staffId;
   }
 
   async listCheckedInByDate(eventId: string, date: string): Promise<AdminParticipantSummary[]> {
@@ -153,19 +170,21 @@ class InMemoryParticipantRepository implements ParticipantRepository {
       }));
   }
 
-  async manualCheckIn(participantId: string): Promise<AdminCheckInResult> {
+  async manualCheckIn(participantId: string, staffId: string): Promise<AdminCheckInResult> {
     const participant = this.store.get(participantId);
     if (!participant) return { status: "NOT_FOUND" };
     if (participant.checkedInAt) {
       return { status: "ALREADY_CHECKED_IN", checkedInAt: participant.checkedInAt };
     }
     participant.checkedInAt = new Date().toISOString();
+    this.checkedInBy.set(participantId, staffId);
     return { status: "CHECKED_IN", checkedInAt: participant.checkedInAt };
   }
 
   async cancelCheckIn(participantId: string): Promise<void> {
     const participant = this.store.get(participantId);
     if (participant) participant.checkedInAt = null;
+    this.checkedInBy.delete(participantId);
   }
 
   async updateParticipant(
@@ -191,12 +210,13 @@ class InMemoryParticipantRepository implements ParticipantRepository {
 
   async updateCheckInTime(
     participantId: string,
-    _staffId: string,
+    staffId: string,
     checkedInAt: Date,
   ): Promise<{ status: "UPDATED" | "NOT_FOUND" }> {
     const participant = this.store.get(participantId);
     if (!participant) return { status: "NOT_FOUND" };
     participant.checkedInAt = checkedInAt.toISOString();
+    this.checkedInBy.set(participantId, staffId);
     return { status: "UPDATED" };
   }
 
@@ -256,6 +276,7 @@ class InMemoryParticipantRepository implements ParticipantRepository {
       if (current > 0) this.dailyCounts.set(key, current - 1);
     }
     this.store.delete(participantId);
+    this.checkedInBy.delete(participantId);
   }
 }
 

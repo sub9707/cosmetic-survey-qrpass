@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation, useParams } from "react-router-dom";
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav";
+import { LogoutButton } from "@/components/shared/logout-button";
 import type { AdminOutletContext } from "@/client/hooks/use-admin-event";
 import { ROUTES } from "@/lib/constants";
 import type { EventSummary } from "@/types/event";
@@ -58,9 +59,12 @@ export default function AdminLayout() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-hidden">
-      <header className="sticky top-0 z-10 border-b bg-background/95 px-4 py-3 backdrop-blur">
-        <p className="text-xs text-muted-foreground">관리자</p>
-        <h1 className="truncate text-base font-bold">{state.event.name}</h1>
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">관리자</p>
+          <h1 className="truncate text-base font-bold">{state.event.name}</h1>
+        </div>
+        <LogoutButton redirectTo={ROUTES.adminLogin} />
       </header>
       <main className="min-w-0 flex-1 px-4 pt-4 pb-24">
         <Outlet context={{ event: state.event } satisfies AdminOutletContext} />

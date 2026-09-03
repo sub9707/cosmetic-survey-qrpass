@@ -2,45 +2,59 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
-interface DemoLoginFormProps {
-  title: string;
-  demoUsername: string;
-  demoPassword: string;
-  /** 로그인 성공 후 이동할 기본 경로 (쿼리스트링 ?next=가 있으면 그쪽을 우선한다) */
+export interface DemoAccount {
+  /** 버튼에 표시할 문구 */
+  label: string;
+  username: string;
+  password: string;
+  /** 로그인 성공 후 이동할 경로 */
   afterLoginPath: string;
 }
 
+interface DemoLoginFormProps {
+  title: string;
+  /** 계정이 1개면 ?next= 쿼리를 우선한다. 여러 개면 각 버튼의 afterLoginPath로 이동. */
+  accounts: DemoAccount[];
+}
+
 /**
- * 데모 단계 전용 공통 로그인 폼: 계정을 직접 입력받지 않고, 버튼 클릭 한 번으로
- * 고정된 데모 계정으로 바로 로그인한다. 스태프/관리자 로그인 화면이 이 컴포넌트를 공유한다.
+ * 데모 단계 전용 로그인: 계정을 입력받지 않고 버튼 클릭 한 번으로 고정 계정에 로그인한다.
+ * 관리자 화면에서는 여러 계정(관리자/스태프)을 버튼으로 나열해 빠르게 전환할 수 있다.
  */
-export function DemoLoginForm({ title, demoUsername, demoPassword, afterLoginPath }: DemoLoginFormProps) {
+export function DemoLoginForm({ title, accounts }: DemoLoginFormProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [pendingUser, setPendingUser] = useState<string | null>(null);
 
-  async function handleLogin() {
+  async function login(account: DemoAccount) {
     setError(null);
-    setIsLoggingIn(true);
+    setPendingUser(account.username);
 
-    const response = await fetch("/api/auth/staff-login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: demoUsername, password: demoPassword }),
-    });
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
+    try {
+      const response = await fetch("/api/auth/staff-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: account.username, password: account.password }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setError("로그인에 실패했어요. 잠시 후 다시 시도해주세요.");
+        setPendingUser(null);
+        return;
+      }
+    } catch {
       setError("로그인에 실패했어요. 잠시 후 다시 시도해주세요.");
-      setIsLoggingIn(false);
+      setPendingUser(null);
       return;
     }
 
-    navigate(searchParams.get("next") || afterLoginPath);
+    const target =
+      accounts.length === 1
+        ? searchParams.get("next") || account.afterLoginPath
+        : account.afterLoginPath;
+    navigate(target, { replace: true });
   }
 
   return (
@@ -49,20 +63,23 @@ export function DemoLoginForm({ title, demoUsername, demoPassword, afterLoginPat
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="username">아이디</Label>
-            <Input id="username" value={demoUsername} disabled readOnly />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="password">비밀번호</Label>
-            <Input id="password" type="password" value={demoPassword} disabled readOnly />
-          </div>
+        <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">데모 계정으로 바로 로그인됩니다.</p>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button size="lg" className="h-12 w-full" disabled={isLoggingIn} onClick={handleLogin}>
-            {isLoggingIn ? "로그인 중..." : "로그인"}
-          </Button>
+          <div className="flex flex-col gap-2">
+            {accounts.map((account, i) => (
+              <Button
+                key={account.username}
+                size="lg"
+                variant={i === 0 ? "default" : "outline"}
+                className="h-12 w-full"
+                disabled={pendingUser !== null}
+                onClick={() => login(account)}
+              >
+                {pendingUser === account.username ? "로그인 중..." : account.label}
+              </Button>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

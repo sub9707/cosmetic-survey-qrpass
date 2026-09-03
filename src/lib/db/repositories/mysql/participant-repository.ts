@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, gte, isNull, lt, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { DAILY_REGISTRATION_LIMIT, type NotificationStatus } from "@/lib/constants";
 import { mysqlDb } from "@/lib/db/client.mysql";
@@ -7,6 +7,7 @@ import {
   checkIns as checkInsTable,
   dailyCounters as dailyCountersTable,
   participants as participantsTable,
+  staff as staffTable,
 } from "@/lib/db/schema.mysql";
 import type {
   AdminParticipantUpdateResult,
@@ -256,6 +257,30 @@ export const mysqlParticipantRepository: ParticipantRepository = {
       )
       .orderBy(desc(participantsTable.createdAt));
 
+    // 각 참가자를 마지막으로 입장 처리한 사람 이름 (check_ins → staff). 취소 시 로그가 지워지므로
+    // 보통 참가자당 0~1건이지만, 여러 건이면 checkedInAt이 가장 늦은 것을 쓴다.
+    const checkedInByName = new Map<string, string>();
+    const ids = rows.map((r) => r.id);
+    if (ids.length > 0) {
+      const logs = await mysqlDb
+        .select({
+          participantId: checkInsTable.participantId,
+          staffName: staffTable.name,
+          at: checkInsTable.checkedInAt,
+        })
+        .from(checkInsTable)
+        .innerJoin(staffTable, eq(checkInsTable.staffId, staffTable.id))
+        .where(inArray(checkInsTable.participantId, ids));
+      const latestAt = new Map<string, number>();
+      for (const log of logs) {
+        const t = log.at ? log.at.getTime() : 0;
+        if (t >= (latestAt.get(log.participantId) ?? -1)) {
+          latestAt.set(log.participantId, t);
+          checkedInByName.set(log.participantId, log.staffName);
+        }
+      }
+    }
+
     return rows.map((r) => ({
       id: r.id,
       name: decryptPii(r.name),
@@ -264,6 +289,7 @@ export const mysqlParticipantRepository: ParticipantRepository = {
       checkedInAt: r.checkedInAt ? r.checkedInAt.toISOString() : null,
       createdAt: r.createdAt.toISOString(),
       qrImageUrl: r.qrImageUrl,
+      checkedInByName: r.checkedInAt ? (checkedInByName.get(r.id) ?? null) : null,
     }));
   },
 

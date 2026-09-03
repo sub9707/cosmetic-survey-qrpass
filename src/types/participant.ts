@@ -41,4 +41,6 @@ export interface AdminParticipantSummary {
   checkedInAt: string | null;
   createdAt: string;
   qrImageUrl: string | null;
+  /** 마지막으로 입장 처리한 스태프/관리자 이름 (미입장이거나 기록 없으면 null) */
+  checkedInByName?: string | null;
 }

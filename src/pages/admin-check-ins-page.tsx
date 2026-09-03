@@ -57,6 +57,11 @@ export default function AdminCheckInsPage() {
                     <div className="min-w-0">
                       <p className="truncate font-medium">{p.name}</p>
                       <p className="truncate text-sm text-muted-foreground">{p.phone}</p>
+                      {isCheckedIn && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          처리: {p.checkedInByName ?? "-"}
+                        </p>
+                      )}
                     </div>
                     <Badge variant={isCheckedIn ? "default" : "outline"} className="shrink-0">
                       {isCheckedIn ? `입장 ${formatTime(p.checkedInAt!)}` : "미입장"}

@@ -5,9 +5,14 @@ export function StaffLoginForm() {
   return (
     <DemoLoginForm
       title="직원 로그인"
-      demoUsername={DEMO_STAFF_USERNAME}
-      demoPassword={DEMO_STAFF_PASSWORD}
-      afterLoginPath="/staff"
+      accounts={[
+        {
+          label: "직원으로 로그인",
+          username: DEMO_STAFF_USERNAME,
+          password: DEMO_STAFF_PASSWORD,
+          afterLoginPath: "/staff",
+        },
+      ]}
     />
   );
 }

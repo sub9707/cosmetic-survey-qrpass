@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation, useParams } from "react-router-dom";
+import { LogoutButton } from "@/components/shared/logout-button";
 import { StaffBottomNav } from "@/components/staff/staff-bottom-nav";
 import type { StaffOutletContext } from "@/client/hooks/use-staff-event-ctx";
 import { ROUTES } from "@/lib/constants";
@@ -59,9 +60,12 @@ export default function StaffLayout() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-hidden">
-      <header className="sticky top-0 z-10 border-b bg-background/95 px-4 py-3 backdrop-blur">
-        <p className="text-xs text-muted-foreground">스태프</p>
-        <h1 className="truncate text-base font-bold">{state.event.name}</h1>
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">스태프</p>
+          <h1 className="truncate text-base font-bold">{state.event.name}</h1>
+        </div>
+        <LogoutButton redirectTo={ROUTES.staffLogin} />
       </header>
       <main className="min-w-0 flex-1 px-4 pt-4 pb-24">
         <Outlet
