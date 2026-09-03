@@ -63,8 +63,13 @@ export const participants = mysqlTable(
     phoneLookupHash: varchar("phone_lookup_hash", { length: 64 }).notNull(),
     privacyAgreed: boolean("privacy_agreed").notNull(),
     marketingAgreed: boolean("marketing_agreed").notNull().default(false),
-    /** 원문 토큰은 저장하지 않고 해시만 저장 (draft.md §7) */
+    /** 입장 스캔 조회용 단방향 해시 (draft.md §7) */
     qrTokenHash: varchar("qr_token_hash", { length: 64 }).notNull().unique(),
+    /**
+     * QR에 담기는 원문 토큰. 미디어 서버 업로드가 실패했을 때 pass 페이지에서 QR을
+     * 다시 그리기 위해 저장한다. (기존 행에는 없을 수 있어 nullable)
+     */
+    qrToken: varchar("qr_token", { length: 36 }),
     /** 미디어 서버에 업로드된 실제 QR 이미지 URL (업로드 전/실패 시 null) */
     qrImageUrl: varchar("qr_image_url", { length: 500 }),
     notificationStatus: mysqlEnum("notification_status", NOTIFICATION_STATUSES)

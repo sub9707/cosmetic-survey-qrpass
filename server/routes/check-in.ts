@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { getParticipantRepository } from "@/lib/db/provider";
 import { hashQrToken } from "@/lib/qr/token";
+import { customerNoFromId } from "@/lib/utils/customer-no";
 import { checkInSchema } from "@/lib/validation/staff";
 import { getStaffSession } from "../session";
 
@@ -31,7 +32,12 @@ checkInRouter.post("/", async (req, res) => {
     });
 
     if (result.status === "CHECKED_IN") {
-      res.json({ success: true, status: "CHECKED_IN", participant: { name: result.participantName } });
+      res.json({
+        success: true,
+        status: "CHECKED_IN",
+        customerNo: customerNoFromId(result.participantId),
+        participant: { name: result.participantName },
+      });
       return;
     }
 
@@ -39,6 +45,7 @@ checkInRouter.post("/", async (req, res) => {
       res.json({
         success: false,
         status: "ALREADY_CHECKED_IN",
+        customerNo: customerNoFromId(result.participantId),
         participant: { name: result.participantName },
         checkedInAt: result.checkedInAt,
       });

@@ -23,6 +23,8 @@ export interface Participant {
   marketingAgreed: boolean;
   answers: ParticipantAnswer[];
   qrTokenHash: string;
+  /** QR에 담기는 원문 토큰 (업로드 실패 시 QR 재생성용) */
+  qrToken: string;
   /** 미디어 서버에 업로드된 실제 QR 이미지 URL (업로드 전/실패 시 null) */
   qrImageUrl: string | null;
   notificationStatus: NotificationStatus;

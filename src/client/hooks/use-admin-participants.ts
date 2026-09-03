@@ -76,5 +76,49 @@ export function useAdminParticipants(eventId: string | undefined) {
     reload();
   }
 
-  return { date, setDate, state, actionError, checkIn, cancelCheckIn, removeParticipant };
+  async function updateParticipant(
+    participantId: string,
+    input: { name: string; phone: string },
+  ): Promise<{ ok: true } | { ok: false; message: string }> {
+    setActionError(null);
+    const res = await fetch(`/api/admin/participants/${participantId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (res.status === 409) {
+      return { ok: false, message: "이미 이 행사에 같은 번호로 등록된 참여자가 있어요." };
+    }
+    if (!res.ok) return { ok: false, message: "수정에 실패했어요." };
+    reload();
+    return { ok: true };
+  }
+
+  /** checkedInAtIso: 표준 ISO 문자열 (호출부에서 로컬 입력값을 변환해 전달) */
+  async function updateCheckInTime(
+    participantId: string,
+    checkedInAtIso: string,
+  ): Promise<{ ok: true } | { ok: false; message: string }> {
+    setActionError(null);
+    const res = await fetch(`/api/admin/participants/${participantId}/check-in`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ checkedInAt: checkedInAtIso }),
+    });
+    if (!res.ok) return { ok: false, message: "입장 시각 수정에 실패했어요." };
+    reload();
+    return { ok: true };
+  }
+
+  return {
+    date,
+    setDate,
+    state,
+    actionError,
+    checkIn,
+    cancelCheckIn,
+    removeParticipant,
+    updateParticipant,
+    updateCheckInTime,
+  };
 }

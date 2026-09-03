@@ -1,3 +1,4 @@
+import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AdminParticipantSummary } from "@/types/participant";
@@ -14,13 +15,11 @@ function formatTime(iso: string): string {
 
 export function AdminParticipantCard({
   participant,
-  onCheckIn,
-  onCancelCheckIn,
+  onEdit,
   onRemove,
 }: {
   participant: AdminParticipantSummary;
-  onCheckIn: () => void;
-  onCancelCheckIn: () => void;
+  onEdit: () => void;
   onRemove: () => void;
 }) {
   const isCheckedIn = Boolean(participant.checkedInAt);
@@ -36,21 +35,19 @@ export function AdminParticipantCard({
           <Badge variant={isCheckedIn ? "default" : "outline"}>
             {isCheckedIn ? `입장 ${formatTime(participant.checkedInAt!)}` : "미입장"}
           </Badge>
-          <Badge variant="secondary">{NOTIFICATION_LABEL[participant.notificationStatus] ?? participant.notificationStatus}</Badge>
+          <Badge variant="secondary">
+            {NOTIFICATION_LABEL[participant.notificationStatus] ?? participant.notificationStatus}
+          </Badge>
         </div>
       </div>
 
       <div className="flex gap-2">
-        {isCheckedIn ? (
-          <Button variant="outline" size="sm" className="flex-1" onClick={onCancelCheckIn}>
-            입장 취소
-          </Button>
-        ) : (
-          <Button variant="secondary" size="sm" className="flex-1" onClick={onCheckIn}>
-            입장 확인
-          </Button>
-        )}
+        <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
+          <Pencil />
+          수정
+        </Button>
         <Button variant="destructive" size="sm" onClick={onRemove}>
+          <Trash2 />
           삭제
         </Button>
       </div>

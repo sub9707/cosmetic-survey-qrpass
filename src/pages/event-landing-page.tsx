@@ -1,4 +1,4 @@
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { EventCtaButton } from "@/components/customer/event-cta-button";
 import { EventLogo } from "@/components/customer/event-logo";
 import { PageContainer } from "@/components/customer/page-container";
@@ -30,9 +30,6 @@ export default function EventLandingPage() {
           ) : (
             <EventCtaButton href={ROUTES.eventSurvey(event.slug)}>설문조사 시작하기</EventCtaButton>
           )}
-          <Link to={ROUTES.staffLogin} className="text-xs text-muted-foreground hover:underline">
-            스태프 페이지
-          </Link>
         </div>
       </div>
     </PageContainer>

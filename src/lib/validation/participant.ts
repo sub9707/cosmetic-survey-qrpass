@@ -24,5 +24,12 @@ export const participantSubmitSchema = participantFormSchema.extend({
   answers: z.array(participantAnswerSchema).min(1),
 });
 
+/** 관리자 참여자 정보 수정 (이름/연락처만) */
+export const adminParticipantUpdateSchema = z.object({
+  name: z.string().trim().min(1, "이름을 입력해주세요.").max(50),
+  phone: z.string().trim().refine(isValidKoreanMobile, "휴대폰 번호 형식을 확인해주세요."),
+});
+
 export type ParticipantFormInput = z.infer<typeof participantFormSchema>;
 export type ParticipantSubmitInput = z.infer<typeof participantSubmitSchema>;
+export type AdminParticipantUpdateInput = z.infer<typeof adminParticipantUpdateSchema>;

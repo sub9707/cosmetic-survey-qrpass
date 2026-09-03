@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { CompleteSuccessView } from "@/components/customer/complete-success-view";
 import { EventCtaButton } from "@/components/customer/event-cta-button";
 import { EventLogo } from "@/components/customer/event-logo";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,7 +37,12 @@ interface CompleteFormProps {
 type ViewState =
   | { kind: "form" }
   | { kind: "full" }
-  | { kind: "success"; qrImageUrl: string | null };
+  | {
+      kind: "success";
+      qrImageUrl: string | null;
+      participantId: string | null;
+      customerNo: string | null;
+    };
 
 export function CompleteForm({
   eventSlug,
@@ -102,7 +108,20 @@ export function CompleteForm({
     }
 
     clearSurveyAnswers(eventSlug);
-    setView({ kind: "success", qrImageUrl: data.qrImageUrl ?? null });
+
+    // 원래는 카카오톡 알림톡으로 QR을 받는 흐름이지만, 개발/모의(mock) 단계에서는
+    // 알림톡을 기다리지 않고 곧바로 QR 확인 페이지로 이동한다.
+    if (data.participantId) {
+      navigate(ROUTES.eventPass(eventSlug, data.participantId), { replace: true });
+      return;
+    }
+
+    setView({
+      kind: "success",
+      qrImageUrl: data.qrImageUrl ?? null,
+      participantId: data.participantId ?? null,
+      customerNo: data.customerNo ?? null,
+    });
   }
 
   if (view.kind === "full") {
@@ -118,23 +137,14 @@ export function CompleteForm({
   }
 
   if (view.kind === "success") {
-    const { qrImageUrl } = view;
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-        <EventLogo name={eventName} logo={eventLogo} />
-        <p className="text-xl font-bold text-event-primary">발송 완료!</p>
-        <p className="text-sm text-muted-foreground">
-          카카오톡으로 입장용 Fast Track 패스가 곧 도착해요.
-        </p>
-        {qrImageUrl && (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-event-primary/30 p-4">
-            <img src={qrImageUrl} alt="입장용 QR" width={160} height={160} />
-            <p className="text-xs text-muted-foreground">
-              (모의 발송 모드 미리보기 — 실제 카카오 연동 시에는 카카오톡으로만 전달됩니다)
-            </p>
-          </div>
-        )}
-      </div>
+      <CompleteSuccessView
+        eventName={eventName}
+        eventLogo={eventLogo}
+        qrImageUrl={view.qrImageUrl}
+        participantId={view.participantId}
+        customerNo={view.customerNo}
+      />
     );
   }
 
