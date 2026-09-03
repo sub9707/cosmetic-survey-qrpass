@@ -22,15 +22,15 @@ participantsRouter.get("/:participantId/status", async (req, res) => {
   }
   const isMockMode = (process.env.KAKAO_MODE ?? "mock") === "mock";
 
-  // 개발(mock)에서 웹으로 바로 QR을 보여준다. 업로드된 이미지 URL이 있으면 그걸 쓰고,
-  // 업로드가 실패해 없으면 저장해 둔 원문 토큰으로 그 자리에서 QR data URI를 만들어 fallback 한다.
+  // 개발(mock)에서 웹으로 바로 QR을 보여준다. 저장된 원문 토큰으로 data URI를 만들어 내려주는데,
+  // 이러면 미디어 서버(HTTP)를 안 거쳐서 HTTPS 페이지의 mixed-content 차단도 피한다.
+  // 토큰이 없는 구 데이터만 예외적으로 업로드된 이미지 URL로 폴백한다.
   let qrImageUrl: string | null = null;
   if (isMockMode) {
-    if (status.qrImageUrl) {
-      qrImageUrl = status.qrImageUrl;
-    } else if (status.qrToken) {
+    if (status.qrToken) {
       qrImageUrl = await QRCode.toDataURL(status.qrToken, { width: 512 }).catch(() => null);
     }
+    if (!qrImageUrl) qrImageUrl = status.qrImageUrl;
   }
 
   res.json({
