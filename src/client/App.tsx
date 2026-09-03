@@ -5,6 +5,7 @@ import AdminHomePage from "@/pages/admin-home-page";
 import AdminLayout from "@/pages/admin-layout";
 import AdminLoginPage from "@/pages/admin-login-page";
 import AdminParticipantsPage from "@/pages/admin-participants-page";
+import AdminScanPage from "@/pages/admin-scan-page";
 import AdminStatsPage from "@/pages/admin-stats-page";
 import EventCompletePage from "@/pages/event-complete-page";
 import EventLandingPage from "@/pages/event-landing-page";
@@ -12,9 +13,10 @@ import EventPassPage from "@/pages/event-pass-page";
 import EventSurveyPage from "@/pages/event-survey-page";
 import HomePage from "@/pages/home-page";
 import NotFoundPage from "@/pages/not-found-page";
-import StaffEventPage from "@/pages/staff-event-page";
 import StaffHomePage from "@/pages/staff-home-page";
+import StaffLayout from "@/pages/staff-layout";
 import StaffLoginPage from "@/pages/staff-login-page";
+import StaffRosterPage from "@/pages/staff-roster-page";
 import StaffScannerPage from "@/pages/staff-scanner-page";
 
 export function App() {
@@ -27,8 +29,10 @@ export function App() {
       <Route path="/event/:eventSlug/pass/:participantId" element={<EventPassPage />} />
       <Route path="/staff/login" element={<StaffLoginPage />} />
       <Route path="/staff" element={<StaffHomePage />} />
-      <Route path="/staff/:eventId" element={<StaffEventPage />} />
-      <Route path="/staff/:eventId/scanner" element={<StaffScannerPage />} />
+      <Route path="/staff/:eventId" element={<StaffLayout />}>
+        <Route index element={<StaffRosterPage />} />
+        <Route path="scan" element={<StaffScannerPage />} />
+      </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin" element={<AdminHomePage />} />
       <Route path="/admin/:eventId" element={<AdminLayout />}>
@@ -36,6 +40,7 @@ export function App() {
         <Route path="daily" element={<AdminDailyPage />} />
         <Route path="participants" element={<AdminParticipantsPage />} />
         <Route path="check-ins" element={<AdminCheckInsPage />} />
+        <Route path="scan" element={<AdminScanPage />} />
       </Route>
       <Route path="/not-found" element={<NotFoundPage />} />
       <Route path="*" element={<Navigate to="/not-found" replace />} />

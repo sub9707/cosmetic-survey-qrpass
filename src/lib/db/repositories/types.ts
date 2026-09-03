@@ -52,8 +52,10 @@ export interface ParticipantRepository {
     qrToken: string | null;
   } | null>;
 
-  // ---- 관리자 전용 (입장 취소/수동 확인/제거/일자별 조회) ----
+  // ---- 관리자/스태프 (입장 취소/수동 확인/제거/일자별 조회) ----
   listByEventAndDate(eventId: string, date: string): Promise<AdminParticipantSummary[]>;
+  /** 그 날(KST) '입장 완료된' 참가자만 (스태프 입장 명단). checkedInAt 최신순. */
+  listCheckedInByDate(eventId: string, date: string): Promise<AdminParticipantSummary[]>;
   manualCheckIn(participantId: string, staffId: string): Promise<AdminCheckInResult>;
   cancelCheckIn(participantId: string): Promise<void>;
   remove(participantId: string): Promise<void>;

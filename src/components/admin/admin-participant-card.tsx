@@ -27,11 +27,11 @@ export function AdminParticipantCard({
   return (
     <div className="flex flex-col gap-2 rounded-lg border p-3">
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="font-medium">{participant.name}</p>
-          <p className="text-sm text-muted-foreground">{participant.phone}</p>
+        <div className="min-w-0">
+          <p className="truncate font-medium">{participant.name}</p>
+          <p className="truncate text-sm text-muted-foreground">{participant.phone}</p>
         </div>
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex shrink-0 flex-col items-end gap-1">
           <Badge variant={isCheckedIn ? "default" : "outline"}>
             {isCheckedIn ? `입장 ${formatTime(participant.checkedInAt!)}` : "미입장"}
           </Badge>
@@ -41,7 +41,7 @@ export function AdminParticipantCard({
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
           <Pencil />
           수정

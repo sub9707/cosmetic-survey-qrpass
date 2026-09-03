@@ -49,11 +49,12 @@ export const ROUTES = {
   eventPass: (slug: string, participantId: string) => `/event/${slug}/pass/${participantId}`,
   staffLogin: "/staff/login",
   staffEvent: (eventId: string) => `/staff/${eventId}`,
-  staffScanner: (eventId: string) => `/staff/${eventId}/scanner`,
+  staffEventScan: (eventId: string) => `/staff/${eventId}/scan`,
   adminLogin: "/admin/login",
   admin: "/admin",
   adminEvent: (eventId: string) => `/admin/${eventId}`,
   adminEventDaily: (eventId: string) => `/admin/${eventId}/daily`,
   adminEventParticipants: (eventId: string) => `/admin/${eventId}/participants`,
   adminEventCheckIns: (eventId: string) => `/admin/${eventId}/check-ins`,
+  adminEventScan: (eventId: string) => `/admin/${eventId}/scan`,
 } as const;

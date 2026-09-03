@@ -54,15 +54,15 @@ export default function AdminCheckInsPage() {
               return (
                 <div key={p.id} className="flex flex-col gap-2 rounded-lg border p-3">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium">{p.name}</p>
-                      <p className="text-sm text-muted-foreground">{p.phone}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{p.name}</p>
+                      <p className="truncate text-sm text-muted-foreground">{p.phone}</p>
                     </div>
-                    <Badge variant={isCheckedIn ? "default" : "outline"}>
+                    <Badge variant={isCheckedIn ? "default" : "outline"} className="shrink-0">
                       {isCheckedIn ? `입장 ${formatTime(p.checkedInAt!)}` : "미입장"}
                     </Badge>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {isCheckedIn ? (
                       <>
                         <Button

@@ -23,11 +23,11 @@ export default function AdminDailyPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-bold">일자별 참여 인원</h2>
         <a
           href={`/api/admin/events/${encodeURIComponent(event.id)}/daily.csv`}
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "shrink-0")}
         >
           <Download />
           엑셀 다운로드

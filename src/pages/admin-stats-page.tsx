@@ -19,7 +19,7 @@ function pct(part: number, total: number): string {
 function QuestionStatBlock({ q }: { q: AdminQuestionStat }) {
   return (
     <div className="space-y-2 rounded-lg border p-3">
-      <p className="text-sm font-medium whitespace-pre-line">
+      <p className="text-sm font-medium wrap-break-word">
         {q.order}. {q.question.replace(/\n/g, " ")}
       </p>
       <p className="text-xs text-muted-foreground">응답 {q.total}건</p>
@@ -27,7 +27,7 @@ function QuestionStatBlock({ q }: { q: AdminQuestionStat }) {
         {q.choices.map((c) => (
           <li key={c.label} className="space-y-1">
             <div className="flex items-baseline justify-between gap-2 text-xs">
-              <span className="truncate">
+              <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">{c.label}.</span> {c.text.replace(/\n/g, " ")}
               </span>
               <span className="shrink-0 tabular-nums text-muted-foreground">

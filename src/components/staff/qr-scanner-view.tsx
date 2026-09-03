@@ -47,11 +47,14 @@ function toastFromResponse(data: CheckInResponse): Toast {
 export function QrScannerView({
   eventId,
   eventName,
-  initialTodayCount,
+  initialTodayCount = 0,
+  exitTo,
 }: {
   eventId: string;
   eventName: string;
-  initialTodayCount: number;
+  initialTodayCount?: number;
+  /** [카메라 종료] 버튼을 눌렀을 때 돌아갈 경로 */
+  exitTo: string;
 }) {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -148,7 +151,7 @@ export function QrScannerView({
   const handleClose = () => {
     scannerRef.current?.stop();
     if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => {});
-    navigate(ROUTES.staffEvent(eventId));
+    navigate(exitTo);
   };
 
   return (

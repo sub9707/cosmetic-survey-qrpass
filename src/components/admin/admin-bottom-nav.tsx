@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, ScanLine, Users } from "lucide-react";
+import { BarChart3, CalendarDays, DoorOpen, QrCode, Users } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -9,12 +9,13 @@ export function AdminBottomNav({ eventId }: { eventId: string }) {
     { to: ROUTES.adminEvent(eventId), label: "통계", icon: BarChart3, end: true },
     { to: ROUTES.adminEventDaily(eventId), label: "일자별", icon: CalendarDays, end: false },
     { to: ROUTES.adminEventParticipants(eventId), label: "참여자", icon: Users, end: false },
-    { to: ROUTES.adminEventCheckIns(eventId), label: "입장", icon: ScanLine, end: false },
+    { to: ROUTES.adminEventCheckIns(eventId), label: "입장관리", icon: DoorOpen, end: false },
+    { to: ROUTES.adminEventScan(eventId), label: "스캔", icon: QrCode, end: false },
   ];
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-md border-t bg-background">
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {items.map(({ to, label, icon: Icon, end }) => (
           <li key={label}>
             <NavLink
@@ -22,7 +23,7 @@ export function AdminBottomNav({ eventId }: { eventId: string }) {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
+                  "flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors",
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
                 )
               }

@@ -267,6 +267,34 @@ export const mysqlParticipantRepository: ParticipantRepository = {
     }));
   },
 
+  async listCheckedInByDate(eventId: string, date: string) {
+    const start = new Date(`${date}T00:00:00+09:00`);
+    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+
+    const rows = await mysqlDb
+      .select()
+      .from(participantsTable)
+      .where(
+        and(
+          eq(participantsTable.eventId, eventId),
+          sql`${participantsTable.checkedInAt} is not null`,
+          gte(participantsTable.checkedInAt, start),
+          lt(participantsTable.checkedInAt, end),
+        ),
+      )
+      .orderBy(desc(participantsTable.checkedInAt));
+
+    return rows.map((r) => ({
+      id: r.id,
+      name: decryptPii(r.name),
+      phone: decryptPii(r.phone),
+      notificationStatus: r.notificationStatus,
+      checkedInAt: r.checkedInAt ? r.checkedInAt.toISOString() : null,
+      createdAt: r.createdAt.toISOString(),
+      qrImageUrl: r.qrImageUrl,
+    }));
+  },
+
   async manualCheckIn(participantId: string, staffId: string): Promise<AdminCheckInResult> {
     return mysqlDb.transaction(async (tx) => {
       const [participant] = await tx

@@ -138,6 +138,21 @@ class InMemoryParticipantRepository implements ParticipantRepository {
       }));
   }
 
+  async listCheckedInByDate(eventId: string, date: string): Promise<AdminParticipantSummary[]> {
+    return [...this.store.values()]
+      .filter((p) => p.eventId === eventId && p.checkedInAt && kstDate(p.checkedInAt) === date)
+      .sort((a, b) => ((a.checkedInAt ?? "") < (b.checkedInAt ?? "") ? 1 : -1))
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        phone: p.phone,
+        notificationStatus: p.notificationStatus,
+        checkedInAt: p.checkedInAt,
+        createdAt: p.createdAt,
+        qrImageUrl: p.qrImageUrl,
+      }));
+  }
+
   async manualCheckIn(participantId: string): Promise<AdminCheckInResult> {
     const participant = this.store.get(participantId);
     if (!participant) return { status: "NOT_FOUND" };
